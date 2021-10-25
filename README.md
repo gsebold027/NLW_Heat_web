@@ -30,9 +30,10 @@ As seguintes ferramentas foram usadas na construção do projeto:
 
 Antes de começar, você vai precisar ter instalado em sua máquina as seguintes ferramentas:
 [Git](https://git-scm.com), [Node.js](https://nodejs.org/en/). 
-Além disso é bom ter um editor para trabalhar com o código como [VSCode](https://code.visualstudio.com/)
+Além disso é bom ter um editor para trabalhar com o código como [VSCode](https://code.visualstudio.com/).
 Para rodar essa aplicação você deve ter instalado a parte de backend dela que você pode encontrar [nesse repositório](https://github.com/gsebold027/NLW_Heat_node).
-  
+Antes de rodar crie um arquivo .env com a informação GITHUB_CLIENT_ID igual a que você utilizou no backend.
+
 ## **Rodando**
 
 ```bash
