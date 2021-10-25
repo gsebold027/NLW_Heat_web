@@ -1,89 +1,88 @@
-import { createContext, ReactNode, useEffect, useState } from "react";
-import { api } from "../services/api";
-
+import 'dotenv/config';
+import { createContext, ReactNode, useEffect, useState } from 'react';
+import { api } from '../services/api';
 
 type User = {
-    id: string;
-    name: string;
-    login: string;
-    avatar_url: string;
-}
+	id: string;
+	name: string;
+	login: string;
+	avatar_url: string;
+};
 
 type AuthConstextData = {
-    user: User | null;
-    signInURL: string;
-    signOut: () => void; 
-}
+	user: User | null;
+	signInURL: string;
+	signOut: () => void;
+};
 
-export const AuthContext = createContext({} as AuthConstextData)
+export const AuthContext = createContext({} as AuthConstextData);
 
 type AuthProvider = {
-    children: ReactNode;
-}
+	children: ReactNode;
+};
 
 type AuthResponse = {
-    token: string;
-    user: {
-        id: string;
-        name: string;
-        login: string;
-        avatar_url:  string;
-    }
-}
+	token: string;
+	user: {
+		id: string;
+		name: string;
+		login: string;
+		avatar_url: string;
+	};
+};
 
 export function AuthProvider(props: AuthProvider) {
-    const [user, setUser] = useState<User | null>(null)
+	const [user, setUser] = useState<User | null>(null);
 
-    const signInURL = `https://github.com/login/oauth/authorize?scope=user&client_id=52929a99710ccc8afe09`
+	const signInURL = `https://github.com/login/oauth/authorize?scope=user&client_id=${process.env.GITHUB_CLIENT_ID}`;
 
-    async function signin(githubCode: string) {
-        const response = await api.post<AuthResponse>('authenticate', {
-            code: githubCode,
-        })
+	async function signin(githubCode: string) {
+		const response = await api.post<AuthResponse>('authenticate', {
+			code: githubCode,
+		});
 
-        const { token, user } = response.data
+		const { token, user } = response.data;
 
-        localStorage.setItem('@dowhile:token', token)
+		localStorage.setItem('@dowhile:token', token);
 
-        api.defaults.headers.common.authorization = `Bearer ${token}`
+		api.defaults.headers.common.authorization = `Bearer ${token}`;
 
-        setUser(user)
+		setUser(user);
+	}
 
-    }
+	function signOut() {
+		setUser(null);
+		localStorage.removeItem('@dowhile:token');
+	}
 
-    function signOut() {
-        setUser(null)
-        localStorage.removeItem('@dowhile:token')
-    }
+	useEffect(() => {
+		const token = localStorage.getItem('@dowhile:token');
 
-    useEffect(() => {
-        const token = localStorage.getItem('@dowhile:token')
+		if (token) {
+			api.defaults.headers.common.authorization = `Bearer ${token}`;
 
-        if (token) {
-            api.defaults.headers.common.authorization = `Bearer ${token}`
+			api.get<User>('profile').then((response) => {
+				setUser(response.data);
+			});
+		}
+	}, []);
 
-            api.get<User>('profile').then(response => {
-                setUser(response.data)
-            })
-        }
-    }, [])
+	useEffect(() => {
+		const url = window.location.href;
+		const hasGithubCode = url.includes('?code=');
 
-    useEffect(() => {
-        const url = window.location.href;
-        const hasGithubCode = url.includes('?code=')
+		if (hasGithubCode) {
+			const [urlWithoutCode, githubCode] = url.split('?code=');
 
-        if(hasGithubCode){
-            const [urlWithoutCode, githubCode] = url.split('?code=')
-        
-            window.history.pushState({}, '', urlWithoutCode)
+			window.history.pushState({}, '', urlWithoutCode);
 
-            signin(githubCode)
-        }
-    }, [])
-    
-    return (
-        <AuthContext.Provider value={{signInURL, user, signOut}}>
-            {props.children}
-        </AuthContext.Provider>
-    )
+			signin(githubCode);
+		}
+	}, []);
+
+	return (
+		<AuthContext.Provider value={{ signInURL, user, signOut }}>
+			{props.children}
+		</AuthContext.Provider>
+	);
 }
